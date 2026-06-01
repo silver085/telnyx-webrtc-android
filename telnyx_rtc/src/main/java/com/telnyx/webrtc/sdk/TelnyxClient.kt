@@ -938,6 +938,14 @@ class TelnyxClient(
      * @see [TelnyxConfig]
      */
     private suspend fun reconnectToSocket() = withContext(Dispatchers.Default) {
+        // Re-arm gateway registration state so the reconnect login re-drives
+        // registration with the same semantics as a fresh connect(): without this
+        // waitingForReg stays false after the first REGED, so onClientReady never
+        // calls requestGatewayStatus() and the registration is never recovered.
+        waitingForReg = true
+        invalidateGatewayResponseTimer()
+        resetGatewayCounters()
+
         // Start the reconnection timer to track timeout
         startReconnectionTimer()
 
