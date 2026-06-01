@@ -943,6 +943,7 @@ class TelnyxClient(
         // waitingForReg stays false after the first REGED, so onClientReady never
         // calls requestGatewayStatus() and the registration is never recovered.
         waitingForReg = true
+        gatewayState = "idle"
         invalidateGatewayResponseTimer()
         resetGatewayCounters()
 
@@ -2209,6 +2210,10 @@ class TelnyxClient(
     }
 
     override fun onGatewayStateReceived(gatewayState: String, receivedSessionId: String?) {
+        // Keep the cached gateway state in sync with the server so onClientReady's
+        // `gatewayState != REGED` check reflects reality instead of the initial
+        // "idle" value (which previously made the REGED branch dead code).
+        this@TelnyxClient.gatewayState = gatewayState
         when (gatewayState) {
             GatewayState.REGED.state -> {
                 invalidateGatewayResponseTimer()
